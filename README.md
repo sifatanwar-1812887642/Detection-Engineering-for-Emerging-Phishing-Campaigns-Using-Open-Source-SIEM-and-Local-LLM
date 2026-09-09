@@ -88,8 +88,19 @@ Application Event ID 1001 created
 
 Evidence:
 
-![ClickFix Event 1001](Screenshots/02_ClickFixMonitor/event1001.png)
+[ClickFix Page](../Screenshots/02_ClickFixMonitor/01_fake_cloudflare_page.png.png)
 
+![User Interaction](../Screenshots/02_ClickFixMonitor/02_clickfix_instruction_page.png.png)
+
+![Run Dialog](../Screenshots/02_ClickFixMonitor/03_run_dialog_paste.png.png)
+
+![ClickFixMonitor Event ID 1001](../Screenshots/02_ClickFixMonitor/clickfix_monitor_1001.png.png)
+
+![ClickFixMonitor Event ID 1001 - Part 1](../Screenshots/02_ClickFixMonitor/clickfix_monitor_1001_1.png.png)
+
+![ClickFixMonitor Event ID 1001 - Part 2](../Screenshots/02_ClickFixMonitor/clickfix_monitor_1001_2.png.png)
+
+**Result:** ClickFixMonitor successfully generated Windows Application Event ID 1001 telemetry.
 ---
 
 ## 03_Wazuh
