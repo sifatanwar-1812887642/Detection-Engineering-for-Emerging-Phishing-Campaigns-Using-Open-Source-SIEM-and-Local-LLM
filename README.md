@@ -1,60 +1,14 @@
 # Detection of Emerging Phishing Campaign Techniques using Wazuh SIEM
 
-## A ClickFix Case Study with Sysmon Telemetry and Local LLM-Assisted Analysis
+## Project Workflow: ClickFix Detection and LLM-Assisted Rule Engineering
 
-A controlled detection-engineering research project that evaluates ClickFix visibility in Wazuh by combining a custom Windows pre-execution monitor, Wazuh SIEM detection, and analyst-reviewed local LLM assistance.
+This project demonstrates an AI-assisted detection engineering workflow for Win+R based ClickFix attacks using ClickFixMonitor, Wazuh SIEM, and a local LLM (Qwen2.5:3B via Ollama).
 
----
-
-## Project Architecture
-
-```text
-Windows 11 Victim
-(Sysmon + PowerShell Logging + Defender)
-          |
-          v
-ClickFixMonitor
-(Application Event ID 1001)
-          |
-          v
-Wazuh Agent
-          |
-          v
-Wazuh Manager / Dashboard
-          |
-          v
-Local LLM (Qwen2.5:3B via Ollama)
-          |
-          v
-Detection Logic / Rule Suggestion
-          |
-          v
-Human Validation
-          |
-          v
-Custom Wazuh Rule
-          |
-          v
-Alert Generation
-```
-
-The LLM is advisory only. It does not automatically deploy rules or perform response actions.
+The project report describes a two-phase approach: baseline Wazuh detection and customized detection using a pre-execution monitor, Event ID 1001, local LLM assistance, and validated custom Wazuh rules. fileciteturn37file0L86-L94
 
 ---
 
-## Laboratory Environment
-
-| Component | Role |
-|---|---|
-| Windows 11 VM | ClickFix victim endpoint |
-| Ubuntu Wazuh VM | SIEM Manager, Indexer and Dashboard |
-| Ubuntu AI VM | Ollama + Qwen2.5:3B local analysis |
-| ClickFixMonitor | Windows pre-execution telemetry generator |
-| VirtualBox | Isolated reproducible laboratory |
-
----
-
-## Project Workflow
+# End-to-End Workflow
 
 ```text
 ClickFix Attack Initiation
@@ -63,7 +17,7 @@ User Copy/Paste Interaction
         ↓
 ClickFixMonitor
         ↓
-Windows Application Event ID 1001 Generated
+Windows Application Event ID 1001
         ↓
 Wazuh Agent
         ↓
@@ -80,130 +34,216 @@ Final Custom Wazuh Rule
 Alert Generation
 ```
 
+LLM output is advisory only. Rules are manually reviewed and validated before deployment. fileciteturn37file0L100-L103
+
 ---
 
-## Evidence Screenshots
+# Laboratory Environment
 
-The evidence follows the actual implementation flow:
+| System | IP | Purpose |
+|---|---|---|
+| Windows 11 Victim | 10.0.2.15 | Sysmon, PowerShell Logging, Defender, ClickFixMonitor |
+| Ubuntu Wazuh Server | 10.0.2.6 | Wazuh Manager, Indexer, Dashboard |
+| Ubuntu AI Server | 10.0.2.7 | Ollama + Qwen2.5:3B |
 
-### 01 - Lab Environment
+---
 
-Location:
+# Evidence Screenshots Flow
+
+## 01_Lab_Environment
+
+Folder:
+
 ```text
 Screenshots/01_Lab_Environment/
 ```
 
-Contains VirtualBox deployment and VM setup evidence.
+Evidence:
 
-### 02 - ClickFixMonitor
+![VirtualBox Lab](Screenshots/01_Lab_Environment/virtualbox.png)
 
-Location:
+Shows the three isolated virtual machines used in the project.
+
+---
+
+## 02_ClickFixMonitor
+
+Folder:
+
 ```text
 Screenshots/02_ClickFixMonitor/
 ```
 
-Contains:
-- ClickFix attack initiation
-- User copy/paste interaction
-- Event ID 1001 generation
+Workflow:
 
-### 03 - Wazuh
+```text
+User opens Run Dialog
+        ↓
+Suspicious command pasted
+        ↓
+ClickFixMonitor detects indicators
+        ↓
+Application Event ID 1001 created
+```
 
-Location:
+Evidence:
+
+![ClickFix Event 1001](Screenshots/02_ClickFixMonitor/event1001.png)
+
+---
+
+## 03_Wazuh
+
+Folder:
+
 ```text
 Screenshots/03_Wazuh/
 ```
 
-Contains:
-- Wazuh Agent communication
-- Event collection
-- Detection processing
+Commands used:
 
-### 05 - LLM Analysis
+### Check Wazuh Manager
 
-Location:
-```text
-Screenshots/05_LLM_Analysis/
+```bash
+sudo systemctl status wazuh-manager
 ```
 
-Contains:
-- Event analysis using Qwen2.5:3B
-- Detection logic suggestion
-- Candidate Wazuh rule recommendation
+### Verify Event ID 1001 in archives
 
-### 04 - Detection Result
-
-Location:
-```text
-Screenshots/04_Detection_Result/
+```bash
+sudo grep -i ClickFixMonitor /var/ossec/logs/archives/archives.json | tail -20
 ```
 
-Contains:
-- Validated custom Wazuh rules
-- Final alert trigger evidence
+Evidence:
+
+![Wazuh Event Collection](Screenshots/03_Wazuh/wazuh_event.png)
 
 ---
 
-## MITRE ATT&CK Mapping
+# 04_LLM_Analysis
+
+Folder:
+
+```text
+Screenshots/04_LLM_Analysis/
+```
+
+The latest ClickFix Event ID 1001 is sent to Qwen2.5:3B for analysis.
+
+Command:
+
+```bash
+sudo python3 ~/wazuh-ai/event1001_to_qwen.py
+```
+
+LLM provides:
+
+- Verdict
+- Confidence
+- Risk level
+- Observed indicators
+- Detection gap
+- Candidate Wazuh rule logic
+
+Evidence:
+
+![LLM Analysis](Screenshots/04_LLM_Analysis/qwen_analysis.png)
+
+---
+
+# 05_Detection_Result
+
+Folder:
+
+```text
+Screenshots/05_Detection_Result/
+```
+
+Final validated Wazuh rules:
+
+```text
+Rule 100100 → Base Event ID 1001 Detection
+Rule 100101 → High Risk ClickFix Detection
+Rule 100102 → Strong PowerShell Indicator Detection
+```
+
+Validate rules:
+
+```bash
+sudo /var/ossec/bin/wazuh-logtest
+```
+
+Restart manager after deployment:
+
+```bash
+sudo systemctl restart wazuh-manager
+```
+
+Check alerts:
+
+```bash
+sudo grep -E '100100|100101|100102' /var/ossec/logs/alerts/alerts.json | tail -20
+```
+
+Evidence:
+
+![Final Alert](Screenshots/05_Detection_Result/final_alert.png)
+
+---
+
+# Local LLM Pipeline
+
+```text
+archives.json
+      ↓
+Event Collector Script
+      ↓
+Ollama API
+      ↓
+Qwen2.5:3B
+      ↓
+Rule Suggestion
+      ↓
+Human Validation
+      ↓
+Wazuh Custom Rule
+```
+
+---
+
+# MITRE ATT&CK Mapping
 
 | Technique ID | Technique |
 |---|---|
 | T1204.004 | User Execution: Malicious Copy and Paste |
 
----
+Additional observed behaviors:
 
-## Wazuh Detection Logic
-
-Custom rules are created after human validation of LLM suggestions.
-
-```text
-Event ID 1001
-      |
-      v
-Wazuh Rule Matching
-      |
-      v
-Alert Generation
-```
-
-Example rule hierarchy:
-
-| Rule ID | Purpose |
+| Technique | Usage |
 |---|---|
-| 100100 | Base ClickFixMonitor Event Detection |
-| 100101 | High-risk ClickFix activity |
-| 100102 | PowerShell indicator condition |
+| T1059.001 | PowerShell execution |
+| T1105 | Ingress Tool Transfer |
+| T1027 | Obfuscated Files or Information |
 
 ---
 
-## Local LLM-Assisted Analysis
+# Reproduction Order
 
-Workflow:
-
-```text
-Wazuh archives.json
-        |
-        v
-Event Collector Script
-        |
-        v
-Ollama API
-        |
-        v
-Qwen2.5:3B
-        |
-        v
-Rule Suggestion
-        |
-        v
-Analyst Validation
-```
-
-The model assists detection engineering by suggesting logic; final implementation is manually reviewed.
+1. Setup VirtualBox laboratory.
+2. Install Wazuh Manager.
+3. Install Windows Sysmon and Wazuh Agent.
+4. Run ClickFixMonitor.
+5. Generate Event ID 1001.
+6. Verify event in Wazuh archives.
+7. Send event to local Qwen model.
+8. Review AI-generated rule suggestion.
+9. Validate with wazuh-logtest.
+10. Deploy custom Wazuh rules.
+11. Confirm dashboard alert.
 
 ---
 
-## Repository Structure
+# Repository Structure
 
 ```text
 .
@@ -211,33 +251,16 @@ The model assists detection engineering by suggesting logic; final implementatio
 ├── Wazuh/
 ├── LLM/
 ├── Screenshots/
-│   ├── 01_Lab_Environment/
-│   ├── 02_ClickFixMonitor/
-│   ├── 03_Wazuh/
-│   ├── 04_Detection_Result/
-│   └── 05_LLM_Analysis/
+│   ├── 01_Lab_Environment
+│   ├── 02_ClickFixMonitor
+│   ├── 03_Wazuh
+│   ├── 04_LLM_Analysis
+│   └── 05_Detection_Result
 └── Documentation/
 ```
 
 ---
 
-## Reproduction Flow
+# Safety Scope
 
-1. Deploy Windows and Ubuntu virtual machines.
-2. Configure Wazuh Manager and Agent.
-3. Run ClickFixMonitor.
-4. Generate Event ID 1001 telemetry.
-5. Verify event collection in Wazuh.
-6. Use local LLM analysis for rule suggestion.
-7. Validate and deploy custom Wazuh rules.
-8. Trigger final detection alert.
-
----
-
-## Safety Scope
-
-This repository is intended for authorized laboratory research, detection engineering, and defensive security validation only.
-
-## License
-
-MIT License.
+This repository is for authorized cybersecurity research, detection engineering, and controlled laboratory validation only.
