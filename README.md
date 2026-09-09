@@ -61,6 +61,16 @@ The LLM is advisory only. It does not automatically deploy rules or trigger resp
 
 ---
 
+## Evidence Screenshots
+
+### Lab Environment
+
+The laboratory was deployed in Oracle VirtualBox with three isolated virtual machines: a Windows 11 victim VM, an Ubuntu Wazuh SIEM VM, and an Ubuntu AI/LLM VM.
+
+![VirtualBox Lab Environment](Screenshots/01_Lab_Environment/virtual_environment.png.png)
+
+---
+
 ## MITRE ATT&CK Mapping
 
 | Technique ID | Technique Name |
@@ -90,6 +100,12 @@ The public repository intentionally keeps the mapping focused on the primary Cli
 ├── LLM/
 │   ├── event1001_to_qwen.py
 │   └── requirements.txt
+│
+├── Screenshots/
+│   ├── 01_Lab_Environment/
+│   ├── 02_ClickFixMonitor/
+│   ├── 03_Wazuh/
+│   └── 04_Detection_Result/
 │
 └── Documentation/
     ├── Architecture.md
