@@ -72,6 +72,8 @@ Windows Application Event ID 1001
 
 ![Run Dialog](../Screenshots/02_ClickFixMonitor/03_run_dialog_paste.png.png)
 
+![ClickFixMonitor Event ID 1001](../Screenshots/02_ClickFixMonitor/clickfix_monitor_1001.png.png)
+
 ![ClickFixMonitor Event ID 1001 - Part 1](../Screenshots/02_ClickFixMonitor/clickfix_monitor_1001_1.png.png)
 
 ![ClickFixMonitor Event ID 1001 - Part 2](../Screenshots/02_ClickFixMonitor/clickfix_monitor_1001_2.png.png)
