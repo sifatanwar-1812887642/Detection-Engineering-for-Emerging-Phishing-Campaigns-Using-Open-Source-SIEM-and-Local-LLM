@@ -2,7 +2,7 @@
 
 ## Project: ClickFix Detection and LLM-Assisted Rule Engineering
 
-This document explains how the complete laboratory workflow was implemented step by step.
+This document explains the complete implementation workflow with commands and corresponding evidence screenshots.
 
 ---
 
@@ -10,16 +10,22 @@ This document explains how the complete laboratory workflow was implemented step
 
 ## Virtual Machines
 
-Three isolated virtual machines were prepared:
+Three isolated virtual machines are prepared:
 
 - Windows 11 Victim VM
 - Ubuntu Wazuh SIEM VM (10.0.2.6)
 - Ubuntu AI/LLM VM
 
-Evidence:
+### Evidence Screenshots
 
 ```
 Screenshots/01_Lab_Environment/
+
+01_VirtualBox_VM_Deployment.png
+→ Windows 11, Wazuh Ubuntu, AI/LLM Ubuntu machines
+
+02_Network_Configuration.png
+→ VM IP configuration
 ```
 
 ---
@@ -28,21 +34,11 @@ Screenshots/01_Lab_Environment/
 
 ## Install Wazuh All-in-One Stack
 
-Update Ubuntu system:
-
 ```bash
 sudo apt update && sudo apt upgrade -y
-```
 
-Download installer:
-
-```bash
 curl -sO https://packages.wazuh.com/4.15/wazuh-install.sh
-```
 
-Install Wazuh Manager, Indexer and Dashboard:
-
-```bash
 sudo bash ./wazuh-install.sh -a
 ```
 
@@ -52,85 +48,122 @@ Verify service:
 sudo systemctl status wazuh-manager
 ```
 
-Evidence:
+### Evidence Screenshots
 
 ```
 Screenshots/03_Wazuh/
+
+01_Wazuh_Manager_Installation.png
+→ Installation process
+
+02_Wazuh_Manager_Status.png
+→ wazuh-manager active status
+
+03_Wazuh_Dashboard.png
+→ Dashboard login and access
 ```
 
 ---
 
-# 3. Windows Telemetry Setup
+# 3. Windows Telemetry Setup (Sysmon)
 
-## Install Sysmon
-
-Install Sysmon with Wazuh configuration:
+Install Sysmon:
 
 ```powershell
 cd C:\Sysmon
 .\Sysmon64.exe -accepteula -i sysmonconfig.xml
 ```
 
-Verify events:
+Verify:
 
 ```
 Event Viewer
- -> Applications and Services Logs
- -> Microsoft
- -> Windows
- -> Sysmon
- -> Operational
+ → Applications and Services Logs
+ → Microsoft
+ → Windows
+ → Sysmon
+ → Operational
+```
+
+### Evidence Screenshots
+
+```
+Screenshots/02_ClickFixMonitor/
+
+01_Sysmon_Operational_Log.png
+→ Sysmon telemetry generation
 ```
 
 ---
 
 # 4. ClickFix Attack Simulation
 
-Attack flow:
+Flow:
 
 ```
 ClickFix Fake Verification Page
-            ↓
+        ↓
 User Copy/Paste Interaction
-            ↓
+        ↓
 Windows Run Dialog
-            ↓
+        ↓
 ClickFixMonitor Detection
-            ↓
-Event ID 1001 Generated
+        ↓
+Windows Application Event ID 1001
 ```
 
-Evidence:
+### Evidence Screenshots
 
 ```
 Screenshots/02_ClickFixMonitor/
+
+02_ClickFix_Attack_Page.png
+→ Fake verification page
+
+03_User_Interaction_Run_Dialog.png
+→ User copy/paste execution attempt
+
+04_ClickFixMonitor_Detection.png
+→ Monitor detects suspicious activity
+
+05_Event_ID_1001.png
+→ Windows Application event generated
 ```
 
 ---
 
 # 5. Wazuh Event Collection
 
-ClickFixMonitor creates Windows Application Event ID 1001.
-
-Wazuh Agent collects the event and forwards it to Wazuh Manager.
-
-Check agent status:
+Check agent:
 
 ```bash
 sudo /var/ossec/bin/agent_control -l
 ```
 
-Check event logs:
+Check collected event:
 
 ```bash
 sudo grep -i ClickFixMonitor /var/ossec/logs/archives/archives.json | tail -20
 ```
 
+### Evidence Screenshots
+
+```
+Screenshots/03_Wazuh/
+
+04_Wazuh_Agent_Active.png
+→ Windows agent connected
+
+05_Event_1001_Collected.png
+→ Event ID 1001 received by Wazuh
+
+06_Wazuh_Detection_View.png
+→ Dashboard detection evidence
+```
+
 ---
 
-# 6. Local LLM Analysis
-
-Event data is sent to local Qwen2.5:3B model through Ollama.
+# 6. Local LLM Analysis (Qwen2.5:3B via Ollama)
 
 Run analysis:
 
@@ -142,23 +175,32 @@ LLM provides:
 
 - Verdict
 - Risk level
-- Suspicious indicators
+- Indicators
 - Detection logic suggestion
 - Candidate Wazuh rules
 
-Evidence:
+### Evidence Screenshots
 
 ```
-Screenshots/05_LLM_Analysis/
+Screenshots/04_LLM_Analysis/
+
+01_Event_Input_to_LLM.png
+→ Event sent for analysis
+
+02_Qwen_Response.png
+→ AI verdict and risk analysis
+
+03_Wazuh_Rule_Suggestion.png
+→ Generated rule recommendation
 ```
 
 ---
 
 # 7. Human Validation and Rule Engineering
 
-Suggested rules are manually reviewed before deployment.
+Suggested rules are reviewed manually.
 
-Example rule hierarchy:
+Example:
 
 ```
 100100 - Base Event ID 1001 Detection
@@ -176,7 +218,7 @@ Validate rule:
 sudo /var/ossec/bin/wazuh-logtest
 ```
 
-Restart manager:
+Restart:
 
 ```bash
 sudo systemctl restart wazuh-manager
@@ -188,15 +230,24 @@ Check alerts:
 sudo tail -f /var/ossec/logs/alerts/alerts.json
 ```
 
-Evidence:
+### Evidence Screenshots
 
 ```
-Screenshots/04_Detection_Result/
+Screenshots/05_Detection_Result/
+
+01_Custom_Rule.png
+→ Final local_rules.xml
+
+02_Rule_Validation.png
+→ wazuh-logtest result
+
+03_Final_Alert.png
+→ Wazuh alert generation
 ```
 
 ---
 
-# Complete Workflow
+# Complete Project Workflow
 
 ```
 ClickFix Attack Initiation
