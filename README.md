@@ -49,6 +49,159 @@ The LLM is advisory: generated rule logic is reviewed, tested with `wazuh-logtes
 - Python 3 + `requests`
 - VirtualBox NAT / segmented laboratory network
 
+# Wazuh SIEM Setup and Agent Configuration
+
+## Environment
+
+| Component | IP Address | Purpose |
+|---|---|---|
+| Windows 11 Victim | 10.0.2.15 | Sysmon + Wazuh Agent + ClickFixMonitor |
+| Wazuh Manager | 10.0.2.6 | SIEM, log collection, detection rules |
+| AI VM | 10.0.2.7 | Ollama + Qwen2.5:3B |
+
+## 1. Wazuh Manager Installation
+
+The Wazuh Manager was installed on Ubuntu Server.
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+curl -sO https://packages.wazuh.com/4.x/wazuh-install.sh
+sudo bash wazuh-install.sh -a
+```
+
+Verify services:
+
+```bash
+sudo systemctl status wazuh-manager
+sudo systemctl status wazuh-indexer
+sudo systemctl status wazuh-dashboard
+```
+
+## 2. Enable Wazuh Archive Logging
+
+Raw JSON event collection was enabled for AI analysis.
+
+Edit:
+
+```bash
+sudo nano /var/ossec/etc/ossec.conf
+```
+
+Add:
+
+```xml
+<logall_json>yes</logall_json>
+```
+
+Restart:
+
+```bash
+sudo systemctl restart wazuh-manager
+```
+
+Raw events are stored in:
+
+```text
+/var/ossec/logs/archives/archives.json
+```
+
+## 3. Windows Wazuh Agent Installation
+
+Install Wazuh Agent on Windows 11 victim:
+
+```powershell
+msiexec.exe /i wazuh-agent.msi /q WAZUH_MANAGER="10.0.2.6"
+```
+
+Register the agent from Wazuh Manager:
+
+```bash
+sudo /var/ossec/bin/manage_agents
+```
+
+Import the generated key into:
+
+```text
+C:\Program Files (x86)\ossec-agent\manage_agents.exe
+```
+
+## 4. Windows Agent Configuration
+
+Edit:
+
+```text
+C:\Program Files (x86)\ossec-agent\ossec.conf
+```
+
+Configure Manager:
+
+```xml
+<client>
+  <server>
+    <address>10.0.2.6</address>
+  </server>
+</client>
+```
+
+## 5. Sysmon and PowerShell Log Collection
+
+Sysmon events:
+
+```xml
+<localfile>
+  <location>Microsoft-Windows-Sysmon/Operational</location>
+  <log_format>eventchannel</log_format>
+</localfile>
+```
+
+PowerShell events:
+
+```xml
+<localfile>
+  <location>Microsoft-Windows-PowerShell/Operational</location>
+  <log_format>eventchannel</log_format>
+</localfile>
+```
+
+## 6. ClickFix Monitor Log Integration
+
+The ClickFixMonitor generates JSON events:
+
+```text
+C:\ClickFixMonitor\clipboard_events.json
+```
+
+Wazuh Agent collects the log using:
+
+```xml
+<localfile>
+  <location>C:\ClickFixMonitor\clipboard_events.json</location>
+  <log_format>json</log_format>
+  <label key="@source">clickfix_clipboard_monitor</label>
+</localfile>
+```
+
+## 7. Restart Agent and Verify Connection
+
+Restart:
+
+```powershell
+Restart-Service wazuh
+```
+
+Verify from Manager:
+
+```bash
+sudo /var/ossec/bin/agent_control -lc
+```
+
+Verify incoming logs:
+
+```bash
+sudo tail -f /var/ossec/logs/archives/archives.json
+```
+
 ## Repository structure
 
 ```text
@@ -63,40 +216,18 @@ The LLM is advisory: generated rule logic is reviewed, tested with `wazuh-logtes
 │   ├── event1001_to_qwen.py
 │   └── requirements.txt
 └── Documentation/
-    ├── Architecture.md
-    ├── Detection-Logic.md
-    ├── MITRE-Mapping.md
-    ├── Validation.md
-    └── Results.md
 ```
 
 ## Pre-execution event
 
-The monitor writes Windows Application Event ID `1001` with provider `ClickFixMonitor`. The event records the target, matched indicators, risk, detection stage, hostname, username, and a SHA-256 hash of the observed Run-dialog content.
+The monitor writes Windows Application Event ID `1001` with provider `ClickFixMonitor`.
 
 ## Final Wazuh hierarchy
 
-- `100100` — base ClickFixMonitor Event ID 1001 detection, inherited from Windows Application parent rule `60601`.
-- `100101` — HIGH-risk ClickFix pre-execution activity.
-- `100102` — strong ClickFix pre-execution indicator condition; validated at Wazuh Level 15.
-
-## Baseline result
-
-Across 28 applicable attack-stage observations in the baseline phase:
-
-| Outcome | Count | Rate |
-|---|---:|---:|
-| Strictly detected | 10 | 35.7% |
-| Partially detected | 2 | 7.1% |
-| Missed | 16 | 57.1% |
-| Weighted coverage | 11 equivalent points | 39.3% |
-
-The principal gap was the absence of a dedicated clipboard-to-Run pre-execution security event.
+- `100100` — base ClickFixMonitor Event ID 1001 detection
+- `100101` — HIGH-risk ClickFix pre-execution activity
+- `100102` — strong ClickFix pre-execution indicator condition
 
 ## Safety / research scope
 
-All simulations are intended for an isolated laboratory. Do not deploy the monitor or detection rules on systems you do not own or administer. The repository intentionally avoids publishing live malicious infrastructure or weaponized payloads.
-
-## License
-
-MIT — see `LICENSE` if added by the project owner.
+All simulations are intended for an isolated laboratory. Do not deploy the monitor or detection rules on systems you do not own or administer.
