@@ -254,6 +254,16 @@ Additional observed behaviors:
 
 ---
 
+# Detection Summary
+
+| Component | Result |
+|---|---|
+| ClickFixMonitor | Event ID 1001 generated |
+| Wazuh Agent | Event collected |
+| Local LLM | Rule suggestion generated |
+| Human Validation | Completed |
+| Wazuh Rule | Alert triggered |
+
 # Repository Structure
 
 ```text
