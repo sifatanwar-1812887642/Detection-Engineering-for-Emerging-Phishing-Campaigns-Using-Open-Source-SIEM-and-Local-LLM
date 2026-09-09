@@ -1,18 +1,90 @@
 # Step-by-Step Reproduction Guide
 
-## Project: ClickFix Detection and LLM-Assisted Rule Engineering
+## Project: Detection Engineering for Emerging Phishing Campaigns Using Open-Source SIEM and Local LLM
 
-This guide follows the complete workflow:
+This guide demonstrates the complete ClickFix phishing detection workflow.
 
 **Step → Command → Screenshot → Result**
 
 ---
 
+# 1. Lab Environment Setup
+
+The cyber range was deployed using Oracle VirtualBox with three isolated virtual machines:
+
+- Windows 11 Victim Machine
+- Ubuntu Wazuh SIEM Server
+- Ubuntu Local LLM Server
+
+## VirtualBox Environment
+
+The virtual machines were prepared before starting the ClickFix detection scenario.
+
+![VirtualBox Lab Environment](../Screenshots/01_Lab_Environment/virtual_environment.png.png)
+
+**Result:** Lab infrastructure successfully prepared.
+
+---
+
+# 2. Wazuh SIEM Deployment
+
+## Install Wazuh Manager
+
+```bash
+sudo apt update && sudo apt upgrade -y
+
+curl -sO https://packages.wazuh.com/4.15/wazuh-install.sh
+
+sudo bash ./wazuh-install.sh -a
+```
+
+Verify service:
+
+```bash
+sudo systemctl status wazuh-manager
+```
+
+**Evidence:** Wazuh dashboard and manager status screenshots.
+
+**Result:** Wazuh SIEM deployed successfully.
+
+---
+
+# 3. ClickFixMonitor Event Generation
+
+The ClickFix simulation starts with a fake verification page that leads to user interaction and generates Windows Application Event ID 1001 through ClickFixMonitor.
+
+Workflow:
+
+```text
+ClickFix Attack Initiation
+        ↓
+User Copy/Paste Interaction
+        ↓
+ClickFixMonitor
+        ↓
+Windows Application Event ID 1001
+```
+
+## ClickFix Evidence
+
+![ClickFix Page](../Screenshots/02_ClickFixMonitor/01_fake_cloudflare_page.png.png)
+
+![User Interaction](../Screenshots/02_ClickFixMonitor/02_clickfix_instruction_page.png.png)
+
+![Run Dialog](../Screenshots/02_ClickFixMonitor/03_run_dialog_paste.png.png)
+
+![Event ID 1001](../Screenshots/02_ClickFixMonitor/clickfix_monitor_1001.png.png)
+
+**Result:** ClickFixMonitor successfully generated Event ID 1001 telemetry.
+
+---
+
 # 4. Local LLM Analysis (Qwen2.5:3B via Ollama)
 
-After collecting ClickFixMonitor Event ID 1001, the event is forwarded to the local LLM for analysis.
+The collected ClickFixMonitor Event ID 1001 is forwarded to the local LLM for analysis.
 
-## Command:
+Command:
 
 ```bash
 sudo python3 ~/wazuh-ai/event1001_to_qwen.py
@@ -26,61 +98,49 @@ The LLM provides:
 - Detection logic suggestion
 - Candidate Wazuh rules
 
-## Event Sent to Qwen
-
-![Event Sent to Qwen](../Screenshots/05_LLM_Analysis/01_event_sent_to_qwen.png.png)
-
-## Qwen Analysis Output
-
 ![Qwen Analysis Output](../Screenshots/05_LLM_Analysis/02_qwen_analysis_output.png.png)
 
-## AI-Assisted Wazuh Rule Suggestion
+![AI Rule Suggestion](../Screenshots/05_LLM_Analysis/03_ai_ruleset_rule_100100.png.png)
 
-The local LLM generated candidate Wazuh detection rules which were reviewed before deployment.
+**Result:** AI-assisted Wazuh rule suggestions were generated.
 
-### Rule 100100 - Base Event Detection
+---
 
-![AI Rule 100100](../Screenshots/05_LLM_Analysis/03_ai_ruleset_rule_100100.png.png)
+# 5. Human Validation and Custom Rule Deployment
 
-### Rule 100101 - High Risk ClickFix Activity
+The generated rules were reviewed before deployment.
 
-![AI Rule 100101](../Screenshots/05_LLM_Analysis/04_ai_ruleset_rule_100101.png.png)
+Validate rules:
 
-### Rule 100102 - Strong ClickFix Indicator Detection
+```bash
+sudo /var/ossec/bin/wazuh-logtest
+```
 
-![AI Rule 100102](../Screenshots/05_LLM_Analysis/05_ai_ruleset_rule_100102.png.png)
+Restart manager:
 
-**Result:** AI-assisted Wazuh rule suggestions were generated from the ClickFixMonitor Event ID 1001 telemetry.
+```bash
+sudo systemctl restart wazuh-manager
+```
+
+**Result:** Validated custom Wazuh rules deployed successfully.
 
 ---
 
 # 6. Final Detection Result
 
-After human validation, the generated custom Wazuh rules were deployed and tested.
-
-## Check Alerts
+Check alerts:
 
 ```bash
 sudo tail -f /var/ossec/logs/alerts/alerts.json
 ```
 
-## Detection Evidence
-
-### Wazuh Detection Event
+Detection Evidence:
 
 ![Wazuh Detection Event](../Screenshots/04_Detection_Result/wazuh_detect_event.png.png)
 
-### Detected Event Details
-
 ![Detected Event Details](../Screenshots/04_Detection_Result/detected_event_details.png.png)
 
-### Event Detection Output
-
-![Detection Event 1](../Screenshots/04_Detection_Result/detect_event_1.png.png)
-
-![Detection Event 2](../Screenshots/04_Detection_Result/detect_event_2.png.png)
-
-**Result:** The final custom Wazuh rule successfully generated the ClickFix detection alert.
+**Result:** Final custom Wazuh rule generated the ClickFix detection alert.
 
 ---
 
