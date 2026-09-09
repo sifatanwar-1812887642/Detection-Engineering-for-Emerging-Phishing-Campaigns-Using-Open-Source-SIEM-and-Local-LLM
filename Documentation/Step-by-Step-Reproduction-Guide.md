@@ -135,7 +135,7 @@ Check alerts:
 ```bash
 sudo tail -f /var/ossec/logs/alerts/alerts.json
 ```
-
+or see in DashBoard
 Detection Evidence:
 
 ![Wazuh Detection Event](../Screenshots/04_Detection_Result/wazuh_detect_event.png.png)
