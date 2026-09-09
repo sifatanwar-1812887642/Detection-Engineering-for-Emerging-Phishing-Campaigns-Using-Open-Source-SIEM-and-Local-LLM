@@ -67,6 +67,7 @@ Windows Application Event ID 1001
 ## ClickFix Evidence
 
 ![ClickFix Page](../Screenshots/02_ClickFixMonitor/01_fake_cloudflare_page.png.png)
+win+r
 
 ![User Interaction](../Screenshots/02_ClickFixMonitor/02_clickfix_instruction_page.png.png)
 
