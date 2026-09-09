@@ -1,0 +1,24 @@
+<group name="clickfix,windows,application,">
+  <!-- Rule 100100: Base ClickFixMonitor Event ID 1001 detection -->
+  <!-- In the validated live deployment this inherits from Windows Application parent 60601. -->
+  <rule id="100100" level="5">
+    <if_sid>60601</if_sid>
+    <field name="win.system.providerName">^ClickFixMonitor$</field>
+    <field name="win.system.eventID">^1001$</field>
+    <description>ClickFixMonitor pre-execution event detected</description>
+  </rule>
+
+  <!-- Rule 100101: Event 1001 marked HIGH risk -->
+  <rule id="100101" level="15">
+    <if_sid>100100</if_sid>
+    <field name="win.eventdata.data" type="pcre2">(?i)Risk:\s*HIGH</field>
+    <description>High-risk ClickFix pre-execution activity detected</description>
+  </rule>
+
+  <!-- Rule 100102: HIGH-risk Event 1001 with strong PowerShell indicator -->
+  <rule id="100102" level="15">
+    <if_sid>100101</if_sid>
+    <field name="win.eventdata.data" type="pcre2">(?i)(powershell)</field>
+    <description>Strong ClickFix pre-execution command indicators detected</description>
+  </rule>
+</group>
