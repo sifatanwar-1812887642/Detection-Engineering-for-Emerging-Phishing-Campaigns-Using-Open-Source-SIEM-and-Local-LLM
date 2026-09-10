@@ -292,8 +292,14 @@ Do not use the techniques or tooling against systems without explicit authorizat
 **Research Project:**  
 Detection Engineering for Emerging Phishing Campaigns Using Open-Source SIEM and Local LLM
 
-**Researcher:**  
-Sifat Anwar
+### Researcher
 
-**Supervisor:**  
-Mr. Md. Samiul Islam
+**Sifat Anwar**  
+**Registration No.: H-400**
+
+### Project Supervisor
+
+**Mr. Md. Samiul Islam**  
+Co-Instructor, PMICS Program  
+Department of Computer Science and Engineering  
+University of Dhaka
