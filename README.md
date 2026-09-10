@@ -2,14 +2,67 @@
 
 ## Project Overview
 
-This project demonstrates an AI-assisted detection engineering workflow for **ClickFix attacks**, with a specific focus on malicious copy-paste activity through the Windows **Run dialog (Win+R)**.
+Phishing continues to evolve beyond traditional malicious links and email attachments. **Emerging phishing campaigns** increasingly use social engineering techniques that persuade users to perform actions themselves, making malicious activity harder to distinguish from legitimate user behavior.
+
+One such emerging technique is **ClickFix**, which is the specific technique investigated in this project. ClickFix-style campaigns typically present a fake verification, CAPTCHA, browser, or system-related prompt and instruct the victim to copy and paste attacker-provided content into a trusted Windows interface such as the **Run dialog (Win+R)**. The user is then manipulated into executing the pasted command.
+
+This behavior is particularly important from a detection-engineering perspective because the malicious command may initially appear as a user-generated action. Conventional endpoint telemetry may also provide limited visibility into the **pre-execution copy-paste stage**, creating a detection gap.
+
+ClickFix is harmful because successful campaigns can lead to command execution, payload delivery, credential theft, malware deployment, persistence, and further compromise depending on the command and subsequent attack chain. The technique has been observed as part of broader phishing and social-engineering activity affecting organizations and end users in different regions, demonstrating why emerging user-driven execution techniques deserve dedicated detection research.
+
+Therefore, this research does **not** attempt to cover every phishing technique. Instead, it uses ClickFix as a representative emerging phishing technique and develops a focused detection-engineering workflow around it.
 
 The research follows a two-phase approach:
 
-1. **Baseline detection:** evaluate what standard Wazuh telemetry and default detection capabilities can identify.
+1. **Baseline detection:** evaluate what standard Wazuh telemetry and default detection capabilities can identify from controlled ClickFix activity.
 2. **Customized detection engineering:** introduce a pre-execution monitor, generate **Windows Application Event ID 1001**, use a local LLM for detection-rule analysis, and validate custom Wazuh rules.
 
 The local AI component uses **Qwen2.5:3B through Ollama**. The LLM is used as an analyst-assistance mechanism; final detection rules are reviewed and validated before deployment.
+
+---
+
+## Emerging Phishing → ClickFix Research Scope
+
+The research scope can be understood as a hierarchy:
+
+```text
+Emerging Phishing Campaigns
+            |
+            +-------------------+
+            |                   |
+     Multiple Emerging     ClickFix Technique
+       Techniques               |
+                                +----------------------+
+                                |                      |
+                         Social Engineering      User-Driven Execution
+                                                       |
+                                                       v
+                                          Win+R Copy/Paste Activity
+                                                       |
+                                                       v
+                                           Pre-Execution Detection
+```
+
+**Research focus:** Emerging phishing campaigns → **ClickFix technique** → Win+R malicious copy/paste → pre-execution telemetry → Wazuh detection → local LLM-assisted detection engineering.
+
+Other emerging phishing variants may use different delivery or execution mechanisms. They are treated as broader threat context rather than as separate implementations of this project.
+
+---
+
+## Why ClickFix Matters
+
+ClickFix represents an important detection challenge because it abuses **human interaction with trusted system interfaces** rather than relying only on a conventional malicious executable or a clearly suspicious URL.
+
+Key security concerns include:
+
+- **Social engineering:** the victim is persuaded to perform the malicious action.
+- **Trusted interface abuse:** Windows Run and other legitimate interfaces can be used as the execution point.
+- **Pre-execution visibility gap:** the malicious command can exist in the clipboard or Run dialog before execution, while conventional monitoring may focus more heavily on process or execution events.
+- **Potential fileless behavior:** some ClickFix payloads can execute commands directly through interpreters such as PowerShell without requiring an obvious dropped executable at the initial stage.
+- **Flexible payload delivery:** the pasted command can be changed by the attacker to support different objectives.
+- **High downstream impact:** depending on the payload, successful execution may lead to credential theft, malware installation, persistence, data theft, or additional compromise.
+
+For this reason, the project focuses on detecting the suspicious command **before execution**, producing dedicated telemetry, and feeding that telemetry into the SIEM and local LLM analysis workflow.
 
 ---
 
@@ -19,6 +72,7 @@ The project addresses a detection gap associated with emerging ClickFix-style ph
 
 Key contributions:
 
+- Treats **ClickFix as a specific emerging phishing technique** within the broader emerging-phishing landscape.
 - Pre-execution detection of suspicious Run-dialog paste activity using **ClickFixMonitor**.
 - Generation of structured **Windows Application Event ID 1001** telemetry.
 - Centralized collection through **Wazuh Agent and Wazuh Manager**.
@@ -31,9 +85,13 @@ Key contributions:
 # End-to-End Workflow
 
 ```text
-ClickFix Attack Initiation
+Emerging Phishing Campaign
         ↓
-User Copy/Paste Interaction
+ClickFix Technique
+        ↓
+Social Engineering / Malicious Copy-Paste
+        ↓
+Windows Run Dialog (Win+R)
         ↓
 ClickFixMonitor
         ↓
