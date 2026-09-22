@@ -96,6 +96,48 @@ This project therefore focuses on detecting suspicious command activity **before
 
 ---
 
+## ClickFixMonitor
+
+**ClickFixMonitor** is the custom endpoint component developed for this project to identify suspicious ClickFix-style activity in the Windows **Run dialog (Win+R)** before the command is executed.
+
+### Implementation
+
+- **Technology:** .NET 8 / WPF
+- **Purpose:** Pre-execution detection of suspicious Run-dialog activity
+- **Target:** Windows Run dialog (Win+R)
+- **Detection Stage:** Before command execution
+- **Windows Telemetry:** Application Event ID **1001**
+- **Event Provider:** **ClickFixMonitor**
+- **SIEM Integration:** Event 1001 → Wazuh Agent → Wazuh Manager
+
+### Event 1001 Telemetry
+
+When suspicious Run-dialog content is detected, ClickFixMonitor generates a structured Windows Application event containing relevant detection information, including:
+
+- Suspicious command line
+- Matched indicators
+- Risk level
+- Detection stage
+- Timestamp
+- Hostname and username
+- SHA256 value
+
+### Example
+
+A controlled test using a PowerShell-based command can generate an Event ID 1001 similar to:
+
+```text
+Command Line: powershell -nop -w hidden -c whoami
+Risk: HIGH
+Detection Stage: Pre-Execution
+Event ID: 1001
+Provider: ClickFixMonitor
+```
+
+The generated Event ID 1001 is then collected by the Wazuh Agent and processed by the Wazuh Manager for subsequent detection engineering and alerting.
+
+---
+
 ## Project Workflow
 
 The complete project workflow is:
