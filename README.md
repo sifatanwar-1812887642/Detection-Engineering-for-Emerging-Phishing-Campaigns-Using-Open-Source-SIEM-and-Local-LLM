@@ -96,6 +96,52 @@ This project therefore focuses on detecting suspicious command activity **before
 
 ---
 
+## Project Workflow
+
+The complete project workflow is:
+
+```text
+Emerging Phishing Campaign
+              ↓
+        ClickFix Technique
+              ↓
+   Social Engineering Prompt
+              ↓
+    Win+R → Ctrl+V → Enter
+              ↓
+     ClickFixMonitor detects
+       before execution
+              ↓
+ Windows Application Event 1001
+              ↓
+        Wazuh Agent
+              ↓
+       Wazuh Manager
+              ↓
+   Event 1001 Log Collection
+              ↓
+ Local LLM (Qwen2.5:3B + Ollama)
+              ↓
+   Detection Analysis / Rule
+          Suggestion
+              ↓
+      Human Validation
+              ↓
+    Custom Wazuh Rule
+              ↓
+       Wazuh Alert
+              ↓
+          Response
+```
+
+### Core Workflow
+
+**Attack → Log Generation → Detection → Alert → Analysis → Response**
+
+This workflow represents the complete detection-engineering lifecycle implemented in the project.
+
+---
+
 ## End-to-End Architecture
 
 ```text
@@ -360,7 +406,7 @@ Do not use the techniques or tooling against systems without explicit authorizat
 
 **University of Dhaka**  
 **Professional Masters in Information and Cyber Security (PMICS)**  
-**Batch III**
+**Batch IV**
 
 ### Research Project
 
